@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mermaid Icon Preview</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+            margin: 16px;
+        }
+
+        #status {
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+        }
+
+        pre.mermaid {
+            background: #f6f8fa;
+            padding: 12px;
+            border-radius: 8px;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="status">Loading…</div>
+    <pre id="diagram" class="mermaid"></pre>
+
+    <script type="module">
+        async function loadMermaid() {
+            try {
+                const local = await import("./node_modules/mermaid/dist/mermaid.esm.min.mjs");
+                return local.default;
+            } catch {
+                const cdn = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+                return cdn.default;
+            }
+        }
+
+        const mermaid = await loadMermaid();
+
+        const statusEl = document.getElementById("status");
+        const diagramEl = document.getElementById("diagram");
+
+        function stripCodeFence(text) {
+            const lines = text.split(/\r?\n/);
+            if (lines.length && lines[0].trimStart().startsWith("```")) lines.shift();
+            while (lines.length && lines[0].trim() === "") lines.shift();
+            if (lines.length && lines[lines.length - 1].trimStart().startsWith("```")) lines.pop();
+            return lines.join("\n");
+        }
+
+        async function loadSimpleIconsJson() {
+            try {
+                const local = await fetch("./node_modules/@iconify-json/simple-icons/icons.json");
+                if (!local.ok) throw new Error("local icons.json fetch failed");
+                return await local.json();
+            } catch {
+                const cdn = await fetch("https://unpkg.com/@iconify-json/simple-icons@1/icons.json");
+                return await cdn.json();
+            }
+        }
+
+        async function tryRegisterSimpleIcons() {
+            try {
+                mermaid.registerIconPacks([
+                    {
+                        name: "simple-icons",
+                        loader: () =>
+                            loadSimpleIconsJson(),
+                    },
+                ]);
+                return "Registered Iconify pack: simple-icons";
+            } catch (e) {
+                return "Could not register Iconify pack (simple-icons). Rendering without custom icons.";
+            }
+        }
+
+        const iconStatus = await tryRegisterSimpleIcons();
+
+        mermaid.initialize({ startOnLoad: false });
+
+        try {
+            const res = await fetch("./model.mermaid");
+            const text = await res.text();
+            diagramEl.textContent = stripCodeFence(text);
+            statusEl.textContent = iconStatus;
+            await mermaid.run();
+        } catch (e) {
+            statusEl.textContent = "Failed to load/render ./model.mermaid\n\n" + String(e);
+        }
+    </script>
+</body>
+
+</html>

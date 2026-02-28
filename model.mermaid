@@ -1,0 +1,39 @@
+architecture-beta
+    group backend(cloud)[Backend]
+
+    service db(database)[Database] in backend
+    service disk1(disk)[Storage] in backend
+    service api(logos:aws-lambda)[API] in backend
+    service server(server)[Server] in backend
+
+    db:R -- L:server
+    disk1:B -- B:db
+    api:T -- T:server
+
+    group ai-model(logos:tensorflow)[AI Model]
+    service ai(server)[AI Model] in ai-model
+    ai:L -- R:server
+
+    group frontend(logos:chrome)[Front end]
+    service web(logos:react)[React] in frontend
+    service web2(logos:npm)[npm] in frontend
+    service web3(logos:vite)[vite] in frontend
+    service web4(logos:typescript)[typescript] in frontend
+
+    api:L -- R:web
+    web:L -- R:web2
+    web:L -- R:web3
+    web:L -- R:web4
+
+
+
+
+
+
+
+    
+
+    
+
+
+
