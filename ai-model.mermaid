@@ -1,0 +1,80 @@
+---
+title: Data flow diagram
+---
+
+graph TD
+
+    subgraph frontend ["Frontend"]
+        b1[User/Webapp] 
+    end
+
+    b1-->|Submit URL|b2[Backend API]
+
+    subgraph backend ["Backend"]
+        b3["Convert URL to canonical name and remove non-ascii chars"]
+        b4["Safe data fetch of URL eg: HTML, headers, etc"]
+        b5["Feature variables"]
+        
+        b2 --> b3 
+        b3 --> b4
+        b4 --> b5
+        %% b3 --> b4
+
+        b5-->d1
+        b5-->d2
+        
+        d1["URL Features: homoglpyphs, tokens, length, domains, etc"]
+        d2["DOM, HTML, Scripts, CSS Features eg: (forms, actions, href or obfuscation)"]
+
+        subgraph AI_model ["AI Model"]
+            d1 --> m1
+            d2 --> m2
+            m1["Model 1: URL phishing ML"]
+
+            m1-->|TODO: insert model here|m1_1["Ensemble Classifier or Some tree classifer"]
+            m2["Model 2: HTML/CSS/JS phishing ML (Pretrained)"]
+            m2-->m2_2["HTML Phish model"]
+            m2-->m2_3["PhishingJS model"]
+
+            m2_2-->m5
+            m2_3-->m5
+            m1_1-->m5
+            m5["Ensemble or Tree Classifier(Weighted votes)"]
+
+            m3["TODO DECIDE Model 3: NLP BERT Phishing Model"]
+            m4["TODO Decide how to pipeline multiple models"]
+            m6{"Is Phishing"}
+
+            m5-->m6
+            m6-->|Yes|m7["Verdict Phishing + reasons + confidence score"]
+            m6-->|No|m8["Verdict Safe + reasons + confidence score"]
+
+        end
+            m7-->m9
+            m8-->m9
+            m9["Store result into DB: {URL, Labels, Verdict, UserID}"]
+            m9-->m10
+            m10["Display result to user"]
+
+            m10-->b1
+        
+    end
+
+
+
+
+    %% subgraph outer_box ["Outer Box Title"]
+    %%     A[Box A] --> B[Box B]
+    %%     subgraph inner_box ["Inner Box Title"]
+    %%         C[Box C] --> D[Box D]
+    %%     end
+    %%     B --> C
+    %% end
+
+    %% A[Christmas] -->|Get money| B(Go shopping)
+    %% B --> C{Let me think}
+    %% C -->|One| D[Laptop]
+    %% C -->|Two| E[iPhone]
+    %% C -->|Three| F[fa:fa-car Car]
+    %% C -->|Four| F(fa:fa-phone test)
+
