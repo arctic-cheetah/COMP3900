@@ -77,7 +77,7 @@ def update_student(student_id):
 
     # NOTE: The front end sends the student data in the json body.
     # ASSUME THAT this will be the case for api usage
-    # Error checking
+    # DO FUCKING Error checking
     if not isinstance(request.json, dict):
         return jsonify({"error": error_msg.ERROR_JSON}), 400
 

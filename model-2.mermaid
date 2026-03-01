@@ -1,0 +1,44 @@
+architecture-beta
+    group backend(cloud)[Backend]
+
+    service db(database)[Database] in backend
+    service pg(logos:postgresql)[Storage] in backend
+    service api(logos:aws-lambda)[API] in backend
+    service server(server)[Server] in backend
+    service flask(logos:flask)[Flask] in backend
+    service python(logos:python)[Python] in backend
+    db:R -- L:server
+    pg:T -- B:db
+    api:R -- T:server
+    python:L -- R:flask
+    flask:T -- B:server
+
+
+    group ai-model(mdi:graph-outline)[ML model]
+    service ai(logos:tensorflow)[AI Model] in ai-model
+    service ML_1(mdi:chip)[Pretrained ML model] in ai-model
+    service ML_2(mdi:brain)[NN Model] in ai-model
+    ML_1:B -- T:ai
+    ML_2:T -- B:ai
+    ai:L -- R:server
+
+    group frontend(mdi:computer)[Front end]
+    service web2(logos:npm)[npm] in frontend
+    service web3(logos:nodejs)[nodejs] in frontend
+    service web4(logos:typescript)[typescript] in frontend
+
+    group client(logos:chrome)[Client]
+    service browser(logos:chrome)[Browser] in client
+    service spa(logos:react)[React SPA] in client
+    
+    
+    spa:L -- R:api
+    api:L -- R:spa
+    spa:L -- R:web2
+    spa:L -- R:web3
+    spa:L -- R:web4
+
+
+
+
+

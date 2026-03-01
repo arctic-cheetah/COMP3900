@@ -1,0 +1,55 @@
+graph TD
+
+    subgraph backend["Backend Server"]
+        c1["GET /scan route"]
+        c0["POST /login route"]
+
+        c2["Execute analysation pipeline"]
+        c3("AI model")
+        c4[("Database: Stores, result, user, etc")]
+        c5["Logout user and invalidate session"]
+
+        c1<-->c2<-->c3<-->c4
+        c0<-->c4
+        c4<-->c5
+    end
+
+    subgraph frontend["Frontend"]
+        a0["User POST '/login' "]
+        
+
+        a0<==>|4xx Login Fail|c0
+        
+        b2-->c1
+        c0-->|200 Login SUCCESS|b1
+
+        b1["Input URL page"]
+        b2["Make request to '/scan' route"]
+        b3["Show scanning loop to user"]
+        b4{"200 OK"}
+        b5{"4xx, 5xx Error"}
+        b6["Show results of scan"]
+        b7["Show scan history"]
+        b8["Show error page"] 
+        b9["Wait for user Input"]
+
+        b1-->b2
+        b2-->b3
+        b3-->b4
+        b3-->b5
+        b5-->b8
+
+        b4-->b6-->b7
+        b8-->b9
+        b7-->b9
+        b9-->b1
+
+        b9-->e1
+        b9-->e2
+        e1{"Logout"}
+        e2{"Session timeout"}
+        e1-->c5
+        e2-->|x seconds|c5
+        
+    end
+
