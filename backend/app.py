@@ -21,11 +21,14 @@ def get_students():
     return: Array of student objects
     """
 
-    return db.get_all_students()
+    return jsonify(db.get_all_students())
 
 
 @app.route("/students", methods=["POST"])
 def create_student():
+    # EDGE CASE: We are FUCKING NOT MAKING STUDENTS OPTIONALLY MARK
+    # THEN how THE FUCK ARE YOU SUPPOSED TO CALCULATE MARKS PROPERLY??
+    # FUCK THAT SHIT
     """
     Route to create a new student
     param name: The name of the student (from request body)
@@ -33,31 +36,32 @@ def create_student():
     param mark: The mark the student received (from request body)
     return: The created student if successful
     """
-    # Assume id increments by 1
-    # Getting the request body
-    if not isinstance(request.json, dict):
+    student_data = request.get_json(silent=True)
+    if not isinstance(student_data, dict):
         return jsonify({"error": error_msg.ERROR_JSON}), 404
 
-    student_data: dict = request.json
     name = student_data.get("name")
     course = student_data.get("course")
-    mark = student_data.get("mark")
+    mark = student_data.get("mark", None)
+    if mark is None:
+        mark = 0
 
-    if not isinstance(name, str) or name is None:
+    # EDGE CASE 2: We need to FUCKING CHECK for strings that are WHITESPACE
+    # Why THE FUCK WOULD THAT HAPPEN? BUT DO SO
+
+    if not isinstance(name, str) or name.strip() == "":
         return jsonify({"error": error_msg.ERROR_NAME}), 400
 
-    if not isinstance(course, str) or course is None:
+    if not isinstance(course, str) or course.strip() == "":
         return jsonify({"error": error_msg.ERROR_COURSE}), 400
 
     if not isinstance(mark, int) or mark is None or mark > 100 or mark < 0:
-        return jsonify({"error": error_msg.ERROR_MARK}), 400
+        return jsonify({"error": error_msg.ERROR_COURSE}), 400
 
     app.logger.info(type(student_data))
 
-    # TODO: THIS DOES NOT CHECK IF DATA HAS DUPLICATE IN DB
-    # EG SAME NAME, COURSE AND MARK
-    db.insert_student(name, course, mark)
-    return jsonify(student_data), 201
+    student_data = db.insert_student(name.strip(), course.strip(), mark)
+    return jsonify(student_data), 200
 
 
 @app.route("/students/<int:student_id>", methods=["PUT"])
@@ -69,34 +73,38 @@ def update_student(student_id):
     param mark: The mark the student received (from request body)
     return: The updated student if successful
     """
+    if student_id is None:
+        app.logger.info(error_msg.ERROR_ID)
+        return jsonify({"error": error_msg.ERROR_ID}), 404
 
     student = db.get_student_by_id(student_id)
+
     if student is None:
         app.logger.info(error_msg.ERROR_ID)
-        return jsonify({"error": error_msg.ERROR_ID}), 400
+        return jsonify({"error": error_msg.ERROR_ID}), 404
 
-    # NOTE: The front end sends the student data in the json body.
-    # ASSUME THAT this will be the case for api usage
-    # DO FUCKING Error checking
-    if not isinstance(request.json, dict):
-        return jsonify({"error": error_msg.ERROR_JSON}), 400
+    student_data = request.get_json(silent=True)
+    if not isinstance(student_data, dict):
+        return jsonify({"error": error_msg.ERROR_JSON}), 404
 
-    student_data: dict = request.json
-    name = student_data.get("name")
-    course = student_data.get("course")
-    mark = student_data.get("mark")
+    # Allow partial updates: only validate fields provided.
+    name = student_data.get("name", None)
+    course = student_data.get("course", None)
+    mark = student_data.get("mark", None)
 
-    if not isinstance(name, str) or name is None:
+    if not isinstance(name, str) or name.strip() == "":
         return jsonify({"error": error_msg.ERROR_NAME}), 400
 
-    if not isinstance(course, str) or course is None:
+    if not isinstance(course, str) or course.strip() == "":
         return jsonify({"error": error_msg.ERROR_COURSE}), 400
 
+    # if not isinstance(mark, int) or mark is None or mark > 100 or mark < 0:
+    #     return jsonify({"error": error_msg.ERROR_MARK}), 400
+    # TODO: decide if we should make mark zero!
     if not isinstance(mark, int) or mark is None or mark > 100 or mark < 0:
-        return jsonify({"error": error_msg.ERROR_MARK}), 400
-
-    db.update_student(student_id, name, course, mark)
-    return student_data, 200
+        mark = 0
+    student_data = db.update_student(student_id, name, course, mark)
+    return jsonify(student_data), 200
 
 
 @app.route("/students/<int:student_id>", methods=["DELETE"])
@@ -112,7 +120,7 @@ def delete_student(student_id):
 
     app.logger.info(f"Student with id: {student_id} delete")
     db.delete_student(student_id)
-    return student, 200
+    return jsonify(student), 200
 
 
 @app.route("/stats")
@@ -121,7 +129,8 @@ def get_stats():
     Route to show the stats of all student marks
     return: An object with the stats (count, average, min, max)
     """
-    # NOTE: You cant have a student with no fucking marks
+    # NOTE: You cant have a student with no fucking marks we made this precondition clear
+    # above
     all_students = db.get_all_students()
     if len(all_students) == 0:
         return {}, 200

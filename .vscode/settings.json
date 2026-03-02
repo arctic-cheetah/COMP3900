@@ -1,0 +1,8 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python.analysis.autoSearchPaths": true,
+    // Needed to fkin add extra paths! For intellisense
+    "python.analysis.extraPaths": [
+        "./backend"
+    ]
+}

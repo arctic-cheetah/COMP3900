@@ -1,5 +1,5 @@
 ERROR_NAME = "Fukcing Student name has incorrect data"
 ERROR_COURSE = "wtf Course name has incorrect data"
-ERROR_MARK = "Are you retarded, Mark name has incorrect data"
+ERROR_MARK = "Are you retarded, Mark has incorrect data"
 ERROR_JSON = "Da fuq Data must be json"
 ERROR_ID = "Wtf are you enumerating student id?"
